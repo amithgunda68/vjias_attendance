@@ -1,0 +1,14 @@
+{
+  "name": "college-attendance-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "College Attendance Management Portal - Enterprise Grade",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
+  },
+  "keywords": ["attendance", "college", "react", "typescript", "vite"],
+  "author": "",
+  "license": "ISC"
+}
