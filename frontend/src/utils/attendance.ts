@@ -38,35 +38,35 @@ export function getTierColorClasses(tier: AttendanceTier): {
   switch (tier) {
     case 'Excellent':
       return {
-        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20',
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-700',
-        border: 'border-emerald-200',
+        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60',
+        bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+        text: 'text-emerald-700 dark:text-emerald-400',
+        border: 'border-emerald-200 dark:border-emerald-800/60',
         progress: 'bg-emerald-500',
       };
     case 'Good':
       return {
-        badge: 'bg-blue-50 text-blue-700 border-blue-200 ring-blue-600/20',
-        bg: 'bg-blue-50',
-        text: 'text-blue-700',
-        border: 'border-blue-200',
+        badge: 'bg-blue-50 text-blue-700 border-blue-200 ring-blue-600/20 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/60',
+        bg: 'bg-blue-50 dark:bg-blue-950/40',
+        text: 'text-blue-700 dark:text-blue-400',
+        border: 'border-blue-200 dark:border-blue-800/60',
         progress: 'bg-blue-500',
       };
     case 'Warning':
       return {
-        badge: 'bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20',
-        bg: 'bg-amber-50',
-        text: 'text-amber-700',
-        border: 'border-amber-200',
+        badge: 'bg-amber-50 text-amber-700 border-amber-200 ring-amber-600/20 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60',
+        bg: 'bg-amber-50 dark:bg-amber-950/40',
+        text: 'text-amber-700 dark:text-amber-400',
+        border: 'border-amber-200 dark:border-amber-800/60',
         progress: 'bg-amber-500',
       };
     case 'Critical':
     default:
       return {
-        badge: 'bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20',
-        bg: 'bg-rose-50',
-        text: 'text-rose-700',
-        border: 'border-rose-200',
+        badge: 'bg-rose-50 text-rose-700 border-rose-200 ring-rose-600/20 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60',
+        bg: 'bg-rose-50 dark:bg-rose-950/40',
+        text: 'text-rose-700 dark:text-rose-400',
+        border: 'border-rose-200 dark:border-rose-800/60',
         progress: 'bg-rose-500',
       };
   }

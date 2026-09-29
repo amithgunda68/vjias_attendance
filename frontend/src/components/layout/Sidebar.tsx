@@ -6,12 +6,10 @@ import {
   BookOpen,
   Calendar,
   Clock,
-  Calculator,
   History,
   Users,
   Building2,
   CheckCircle2,
-  AlertTriangle,
   FileBarChart2,
   Settings,
   Shield,
@@ -33,15 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
     { name: 'Attendance History', path: '/student#history', icon: History },
     { name: 'Calendar', path: '/student#calendar', icon: Calendar },
     { name: 'Timetable', path: '/student#timetable', icon: Clock },
-    { name: 'Target Calculator', path: '/student#calculator', icon: Calculator },
   ];
 
   const facultyLinks = [
     { name: 'Faculty Dashboard', path: '/faculty', icon: LayoutDashboard },
     { name: 'Today\'s Classes', path: '/faculty#schedule', icon: Clock },
     { name: 'Mark Attendance', path: '/faculty#marking', icon: CheckCircle2 },
-    { name: 'Low Attendance Alert', path: '/faculty#watchlist', icon: AlertTriangle },
-    { name: 'Subject Reports', path: '/faculty#reports', icon: FileBarChart2 },
   ];
 
   const adminLinks = [
@@ -55,34 +50,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
 
   let links = studentLinks;
   let roleTitle = 'Student Portal';
-  let badgeColor = 'bg-blue-100 text-blue-800 border-blue-200';
+  let badgeColor = 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60';
 
   if (role === 'faculty') {
     links = facultyLinks;
     roleTitle = 'Faculty Portal';
-    badgeColor = 'bg-purple-100 text-purple-800 border-purple-200';
+    badgeColor = 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800/60';
   } else if (role === 'admin') {
     links = adminLinks;
     roleTitle = 'Admin Portal';
-    badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+    badgeColor = 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60';
   }
 
   const content = (
-    <div className="flex h-full flex-col justify-between bg-white border-r border-slate-200/90 w-64">
+    <div className="flex h-full flex-col justify-between bg-white dark:bg-[#0c1222] border-r border-slate-200/90 dark:border-slate-800 w-64 transition-colors">
       <div>
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5 min-w-0">
-            <img
-              src="/vjias-logo.png"
-              alt="VJIAS Logo"
-              className="h-10 w-auto max-w-[170px] object-contain"
-            />
+            <div className="p-1 rounded-lg bg-white/5 dark:bg-white/10">
+              <img
+                src="/vjias-logo.png"
+                alt="VJIAS Logo"
+                className="h-10 w-auto max-w-[170px] object-contain"
+              />
+            </div>
           </div>
           {mobileOpen && (
             <button
               onClick={() => setMobileOpen(false)}
-              className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 shrink-0"
+              className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 shrink-0 cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
@@ -90,9 +87,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
         </div>
 
         {/* Role Badge */}
-        <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100">
+        <div className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active Mode</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Active Mode</span>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${badgeColor}`}>
               {roleTitle}
             </span>
@@ -111,8 +108,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-2xs'
-                      : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                      ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-2xs dark:bg-indigo-950/70 dark:text-indigo-300 dark:border dark:border-indigo-800/40'
+                      : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
                   }`
                 }
               >
@@ -125,25 +122,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
       </div>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-slate-200 overflow-hidden shrink-0 border border-slate-300">
+          <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-300 dark:border-slate-700">
             {user?.avatar ? (
               <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center font-bold text-slate-600 text-xs">
+              <div className="flex h-full w-full items-center justify-center font-bold text-slate-600 dark:text-slate-300 text-xs">
                 {user?.name.charAt(0) || 'U'}
               </div>
             )}
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-semibold text-slate-800 truncate">{user?.name}</p>
-            <p className="text-[11px] text-slate-500 truncate capitalize">{role}</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{user?.name}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate capitalize">{role}</p>
           </div>
         </div>
-        <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
           <span className="flex items-center gap-1">
-            <Shield className="h-3 w-3 text-emerald-600" /> VJIAS Academic OS
+            <Shield className="h-3 w-3 text-emerald-500" /> VJIAS Academic OS
           </span>
           <span>v2.4</span>
         </div>
@@ -162,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 z-50 flex max-w-full animate-in slide-in-from-left">

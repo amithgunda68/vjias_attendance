@@ -23,25 +23,25 @@ export const StatCard: React.FC<StatCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs transition-all hover:shadow-md ${className}`}>
+    <div className={`bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs transition-all hover:shadow-md dark:bg-slate-900/90 dark:border-slate-800 dark:hover:border-slate-700 ${className}`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{title}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{value}</span>
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{value}</span>
             {trend && (
               <span
                 className={`inline-flex items-center text-xs font-medium ${
-                  trend.isPositive ? 'text-emerald-600' : 'text-rose-600'
+                  trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {trend.isPositive ? '↑' : '↓'} {trend.value}
               </span>
             )}
           </div>
-          {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
         </div>
-        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconBgColor}`}>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconBgColor} dark:bg-opacity-25`}>
           {icon}
         </div>
       </div>

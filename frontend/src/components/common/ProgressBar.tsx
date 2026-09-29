@@ -28,7 +28,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className={`w-full bg-slate-100 rounded-full overflow-hidden ${heightClasses} border border-slate-200/50`}>
+      <div className={`w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden ${heightClasses} border border-slate-200/50 dark:border-slate-700/50`}>
         <div
           className={`${heightClasses} rounded-full transition-all duration-500 ease-out ${progress}`}
           style={{ width: `${clamped}%` }}
@@ -36,7 +36,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       </div>
       {showThresholdMarker && (
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-slate-400/80 z-10"
+          className="absolute top-0 bottom-0 w-0.5 bg-slate-400/80 dark:bg-slate-400 z-10"
           style={{ left: `${threshold}%` }}
           title={`Required Threshold: ${threshold}%`}
         />

@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { StatCard } from '../components/common/StatCard';
 import { Modal } from '../components/common/Modal';
+import { useTheme } from '../context/ThemeContext';
 import {
   DEMO_ADMIN,
   DEPARTMENTS_DATA,
@@ -34,6 +35,7 @@ import {
 } from '../services/mockData';
 
 export const AdminDashboard: React.FC = () => {
+  const { isDark } = useTheme();
   const [departments] = useState(DEPARTMENTS_DATA);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
@@ -63,7 +65,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Admin Executive Header */}
-      <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800/80">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
@@ -118,28 +120,28 @@ export const AdminDashboard: React.FC = () => {
           value={totalStudents.toLocaleString()}
           subtitle="Enrolled active scholars"
           icon={<Users className="h-5 w-5" />}
-          iconBgColor="bg-blue-50 text-blue-600"
+          iconBgColor="bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"
         />
         <StatCard
           title="Total Faculty"
           value={totalFaculty}
           subtitle="Full-time & adjunct"
           icon={<GraduationCap className="h-5 w-5" />}
-          iconBgColor="bg-purple-50 text-purple-600"
+          iconBgColor="bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400"
         />
         <StatCard
           title="Departments"
           value={departments.length}
           subtitle="Engineering & Sciences"
           icon={<Building2 className="h-5 w-5" />}
-          iconBgColor="bg-slate-100 text-slate-700"
+          iconBgColor="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
         />
         <StatCard
           title="College Attendance"
           value={`${collegeAvgAttendance}%`}
           subtitle="Institution benchmark"
           icon={<TrendingUp className="h-5 w-5" />}
-          iconBgColor="bg-emerald-50 text-emerald-600"
+          iconBgColor="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
           trend={{ value: '0.8% vs last month', isPositive: true }}
         />
         <StatCard
@@ -147,21 +149,21 @@ export const AdminDashboard: React.FC = () => {
           value={totalLowAttendance}
           subtitle={`Students below ${minThreshold}%`}
           icon={<AlertTriangle className="h-5 w-5" />}
-          iconBgColor="bg-rose-50 text-rose-600"
+          iconBgColor="bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
         />
       </div>
 
       {/* Institutional Analytics Charts (Section 18 & 12) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Department-Wise Attendance Comparison */}
-        <div id="departments" className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between">
+        <div id="departments" className="lg:col-span-7 bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Department Attendance Overview</h3>
-                <p className="text-xs text-slate-500">Comparative attendance averages across academic departments</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Department Attendance Overview</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Comparative attendance averages across academic departments</p>
               </div>
-              <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                 Min Req: {minThreshold}%
               </span>
             </div>
@@ -169,55 +171,55 @@ export const AdminDashboard: React.FC = () => {
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={departments} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
                   <XAxis dataKey="code" stroke="#94a3b8" fontSize={11} tickLine={false} />
                   <YAxis domain={[60, 100]} stroke="#94a3b8" fontSize={11} tickLine={false} unit="%" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1e293b',
+                      backgroundColor: isDark ? '#0f172a' : '#1e293b',
+                      borderColor: isDark ? '#334155' : 'transparent',
                       borderRadius: '8px',
                       color: '#fff',
                       fontSize: '12px',
-                      border: 'none',
                     }}
                     formatter={(value: any) => [`${value}%`, 'Average Attendance']}
                   />
                   <ReferenceLine y={minThreshold} stroke="#f43f5e" strokeDasharray="3 3" label={{ value: `Threshold (${minThreshold}%)`, fill: '#f43f5e', fontSize: 10 }} />
-                  <Bar dataKey="averageAttendance" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="averageAttendance" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Highest Attendance: <strong>Biotechnology (86.2%)</strong></span>
-            <span className="text-rose-600 font-medium">Mechanical Engineering requires review (78.6%)</span>
+          <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Highest Attendance: <strong className="text-slate-800 dark:text-slate-200">Biotechnology (86.2%)</strong></span>
+            <span className="text-rose-600 dark:text-rose-400 font-medium">Mechanical Engineering requires review (78.6%)</span>
           </div>
         </div>
 
         {/* Monthly Attendance Trends */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Institution Trend (6 Months)</h3>
-                <p className="text-xs text-slate-500">Monthly aggregate attendance curve</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Institution Trend (6 Months)</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Monthly aggregate attendance curve</p>
               </div>
             </div>
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={COLLEGE_MONTHLY_TREND} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
                   <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} tickLine={false} />
                   <YAxis domain={[70, 100]} stroke="#94a3b8" fontSize={11} tickLine={false} unit="%" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1e293b',
+                      backgroundColor: isDark ? '#0f172a' : '#1e293b',
+                      borderColor: isDark ? '#334155' : 'transparent',
                       borderRadius: '8px',
                       color: '#fff',
                       fontSize: '12px',
-                      border: 'none',
                     }}
                     formatter={(value: any) => [`${value}%`, 'Attendance']}
                   />
@@ -225,9 +227,9 @@ export const AdminDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="averageAttendance"
-                    stroke="#d97706"
+                    stroke="#f59e0b"
                     strokeWidth={3}
-                    dot={{ fill: '#d97706', r: 4 }}
+                    dot={{ fill: '#f59e0b', r: 4 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
@@ -235,23 +237,23 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Overall Stability: <strong>Consistent (+0.4%)</strong></span>
+          <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Overall Stability: <strong className="text-slate-800 dark:text-slate-200">Consistent (+0.4%)</strong></span>
           </div>
         </div>
       </div>
 
       {/* Department Breakdown Table & Management Panel (Section 22 & 23) */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-3">
+      <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4 gap-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Academic Departments & Compliance</h3>
-            <p className="text-xs text-slate-500">Enrolment statistics, faculty ratio, and threshold non-compliance</p>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Academic Departments & Compliance</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Enrolment statistics, faculty ratio, and threshold non-compliance</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => alert('Add Department modal will be available in Phase 5.')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>New Department</span>
@@ -261,7 +263,7 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[10px] border-y border-slate-100">
+            <thead className="bg-slate-50/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] border-y border-slate-100 dark:border-slate-800">
               <tr>
                 <th className="py-2.5 px-4">Department Name</th>
                 <th className="py-2.5 px-4">Code</th>
@@ -271,18 +273,18 @@ export const AdminDashboard: React.FC = () => {
                 <th className="py-2.5 px-4 text-right">Students Below {minThreshold}%</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {departments.map((dept) => (
-                <tr key={dept.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-3 px-4 font-semibold text-slate-900">{dept.name}</td>
-                  <td className="py-3 px-4 font-mono font-medium text-slate-500">{dept.code}</td>
-                  <td className="py-3 px-4 text-slate-700">{dept.studentCount}</td>
-                  <td className="py-3 px-4 text-slate-700">{dept.facultyCount}</td>
+                <tr key={dept.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{dept.name}</td>
+                  <td className="py-3 px-4 font-mono font-medium text-slate-500 dark:text-slate-400">{dept.code}</td>
+                  <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{dept.studentCount}</td>
+                  <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{dept.facultyCount}</td>
                   <td className="py-3 px-4">
-                    <span className="font-bold text-slate-900">{dept.averageAttendance}%</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{dept.averageAttendance}%</span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700 border border-rose-200">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-950/60 px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                       {dept.lowAttendanceCount} students
                     </span>
                   </td>
@@ -303,13 +305,13 @@ export const AdminDashboard: React.FC = () => {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Report Type
             </label>
             <select
               value={exportScope}
               onChange={(e) => setExportScope(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-600"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-600"
             >
               <option value="college_summary">College Summary & Department Averages</option>
               <option value="low_attendance_debarment">Critical Low Attendance (Debarment List)</option>
@@ -319,7 +321,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               File Format
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -328,11 +330,11 @@ export const AdminDashboard: React.FC = () => {
                 onClick={() => setExportFormat('csv')}
                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   exportFormat === 'csv'
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-600/20'
-                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-300 ring-2 ring-indigo-600/20'
+                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800'
                 }`}
               >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 <span>CSV Spreadsheet</span>
               </button>
               <button
@@ -340,26 +342,26 @@ export const AdminDashboard: React.FC = () => {
                 onClick={() => setExportFormat('pdf')}
                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   exportFormat === 'pdf'
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-600/20'
-                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-950/60 dark:text-indigo-300 ring-2 ring-indigo-600/20'
+                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800'
                 }`}
               >
-                <FileText className="h-4 w-4 text-rose-600" />
+                <FileText className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                 <span>PDF Document</span>
               </button>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               onClick={() => setExportModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-600/30 cursor-pointer"
             >
               <Download className="h-4 w-4" />
               <span>Generate & Download</span>
@@ -379,10 +381,10 @@ export const AdminDashboard: React.FC = () => {
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Minimum Eligibility Threshold
               </label>
-              <span className="text-sm font-black text-amber-700">{minThreshold}%</span>
+              <span className="text-sm font-black text-amber-700 dark:text-amber-400">{minThreshold}%</span>
             </div>
             <input
               type="range"
@@ -390,31 +392,31 @@ export const AdminDashboard: React.FC = () => {
               max="85"
               value={minThreshold}
               onChange={(e) => setMinThreshold(Number(e.target.value))}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
               Default university standard is 75%. Students below this threshold are flagged for examination debarment.
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 text-slate-600">
-            <p className="font-semibold text-slate-800">Attendance Status Tiers (Section 8):</p>
-            <p>• 90% - 100%: <span className="text-emerald-700 font-bold">Excellent</span></p>
-            <p>• 80% - 89.9%: <span className="text-blue-700 font-bold">Good</span></p>
-            <p>• {minThreshold}% - 79.9%: <span className="text-amber-700 font-bold">Warning</span></p>
-            <p>• Below {minThreshold}%: <span className="text-rose-700 font-bold">Critical</span></p>
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">Attendance Status Tiers (Section 8):</p>
+            <p>• 90% - 100%: <span className="text-emerald-700 dark:text-emerald-400 font-bold">Excellent</span></p>
+            <p>• 80% - 89.9%: <span className="text-blue-700 dark:text-blue-400 font-bold">Good</span></p>
+            <p>• {minThreshold}% - 79.9%: <span className="text-amber-700 dark:text-amber-400 font-bold">Warning</span></p>
+            <p>• Below {minThreshold}%: <span className="text-rose-700 dark:text-rose-400 font-bold">Critical</span></p>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               onClick={() => setConfigModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveConfig}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-600/30 cursor-pointer"
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>Save Policy</span>
