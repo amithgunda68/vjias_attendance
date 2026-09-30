@@ -7,9 +7,19 @@ import { Login } from './pages/Login';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { FacultyDashboard } from './pages/FacultyDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import type { UserRole } from './types';
+
+const RoleRoute: React.FC<{ role: UserRole; children: React.ReactNode }> = ({ role, children }) => {
+  const { role: currentRole, isAuthenticated, authLoading } = useAuth();
+  if (authLoading) return <div className="p-8 text-sm text-slate-500">Restoring your session...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (currentRole !== role) return <Navigate to={`/${currentRole}`} replace />;
+  return <>{children}</>;
+};
 
 const RoleBasedRedirect: React.FC = () => {
-  const { role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated, authLoading } = useAuth();
+  if (authLoading) return <div className="p-8 text-sm text-slate-500">Restoring your session...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role === 'faculty') return <Navigate to="/faculty" replace />;
   if (role === 'admin') return <Navigate to="/admin" replace />;
@@ -27,9 +37,9 @@ export const App: React.FC = () => {
 
           {/* Protected Dashboard Layout Routes */}
           <Route element={<DashboardLayout />}>
-            <Route path="/student" element={<StudentDashboard />} />
-            <Route path="/faculty" element={<FacultyDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/student" element={<RoleRoute role="student"><StudentDashboard /></RoleRoute>} />
+            <Route path="/faculty" element={<RoleRoute role="faculty"><FacultyDashboard /></RoleRoute>} />
+            <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
           </Route>
 
           {/* Root and Fallback Routes */}

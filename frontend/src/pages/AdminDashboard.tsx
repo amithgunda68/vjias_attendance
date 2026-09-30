@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users,
   GraduationCap,
@@ -33,22 +33,51 @@ import {
   DEPARTMENTS_DATA,
   COLLEGE_MONTHLY_TREND,
 } from '../services/mockData';
+import { useAuth } from '../context/AuthContext';
+import { fetchAdminDashboard } from '../services/portalData';
+import type { DepartmentSummary } from '../types';
 
 export const AdminDashboard: React.FC = () => {
   const { isDark } = useTheme();
-  const [departments] = useState(DEPARTMENTS_DATA);
+  const { user, isDemo } = useAuth();
+  const admin = user?.role === 'admin' ? user : DEMO_ADMIN;
+  const [departments, setDepartments] = useState<DepartmentSummary[]>(isDemo ? DEPARTMENTS_DATA : []);
+  const [monthlyTrend, setMonthlyTrend] = useState(COLLEGE_MONTHLY_TREND);
+  const [dataLoading, setDataLoading] = useState(!isDemo);
+  const [dataError, setDataError] = useState('');
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [minThreshold, setMinThreshold] = useState<number>(75);
   const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
   const [exportScope, setExportScope] = useState<string>('college_summary');
 
+  useEffect(() => {
+    if (isDemo || user?.role !== 'admin') return;
+    let active = true;
+    fetchAdminDashboard()
+      .then((data) => {
+        if (!active) return;
+        setDepartments(data.departments);
+        setMonthlyTrend(data.monthlyTrend);
+        setDataError('');
+      })
+      .catch((error: unknown) => {
+        if (active) setDataError(error instanceof Error ? error.message : 'Unable to load administration data.');
+      })
+      .finally(() => {
+        if (active) setDataLoading(false);
+      });
+    return () => { active = false; };
+  }, [isDemo, user]);
+
   const totalStudents = departments.reduce((acc, d) => acc + d.studentCount, 0);
   const totalFaculty = departments.reduce((acc, d) => acc + d.facultyCount, 0);
   const totalLowAttendance = departments.reduce((acc, d) => acc + d.lowAttendanceCount, 0);
   const collegeAvgAttendance = Math.round(
-    (departments.reduce((acc, d) => acc + d.averageAttendance, 0) / departments.length) * 10
+    (departments.length ? departments.reduce((acc, d) => acc + d.averageAttendance, 0) / departments.length : 0) * 10
   ) / 10;
+  const highestDepartment = [...departments].sort((a, b) => b.averageAttendance - a.averageAttendance)[0];
+  const lowestDepartment = [...departments].sort((a, b) => a.averageAttendance - b.averageAttendance)[0];
 
   const handleExport = () => {
     // Generate simulated export download
@@ -64,6 +93,8 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
+      {dataLoading && <p role="status" className="text-sm text-slate-500">Loading college attendance data...</p>}
+      {dataError && <p role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{dataError}</p>}
       {/* Admin Executive Header */}
       <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800/80">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-500/10 blur-2xl pointer-events-none" />
@@ -71,22 +102,22 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-start gap-4">
             <div className="h-14 w-14 rounded-2xl bg-white/10 p-1 backdrop-blur-md border border-white/20 shrink-0">
               <img
-                src={DEMO_ADMIN.avatar}
-                alt={DEMO_ADMIN.name}
+                src={admin.avatar}
+                alt={admin.name}
                 className="h-full w-full object-cover rounded-xl"
               />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {DEMO_ADMIN.name}
+                  {admin.name}
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-200 border border-amber-400/30">
                   <ShieldCheck className="h-3.5 w-3.5" /> Administrator
                 </span>
               </div>
               <p className="mt-1 text-xs sm:text-sm text-slate-300">
-                {DEMO_ADMIN.title} • {DEMO_ADMIN.department}
+                {(admin.role === 'admin' ? admin.title : '')} • {admin.department}
               </p>
               <p className="text-xs text-slate-400 mt-0.5">
                 Academic Year 2025-2026 • Term II (Fall)
@@ -192,8 +223,8 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Highest Attendance: <strong className="text-slate-800 dark:text-slate-200">Biotechnology (86.2%)</strong></span>
-            <span className="text-rose-600 dark:text-rose-400 font-medium">Mechanical Engineering requires review (78.6%)</span>
+            <span>Highest Attendance: <strong className="text-slate-800 dark:text-slate-200">{highestDepartment ? `${highestDepartment.name} (${highestDepartment.averageAttendance}%)` : 'No attendance data yet'}</strong></span>
+            <span className="text-rose-600 dark:text-rose-400 font-medium">{lowestDepartment ? `${lowestDepartment.name} (${lowestDepartment.averageAttendance}%)` : 'No department attendance data yet'}</span>
           </div>
         </div>
 
@@ -209,7 +240,7 @@ export const AdminDashboard: React.FC = () => {
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={COLLEGE_MONTHLY_TREND} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <LineChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
                   <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} tickLine={false} />
                   <YAxis domain={[70, 100]} stroke="#94a3b8" fontSize={11} tickLine={false} unit="%" />

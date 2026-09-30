@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users,
   BookOpen,
@@ -16,18 +16,50 @@ import {
   INITIAL_STUDENT_ROSTER,
 } from '../services/mockData';
 import type { FacultyClassSchedule, StudentRosterItem } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { fetchFacultyDashboard, fetchFacultyRoster, saveAttendance } from '../services/portalData';
 
 export const FacultyDashboard: React.FC = () => {
-  const [schedule, setSchedule] = useState<FacultyClassSchedule[]>(FACULTY_SCHEDULE);
+  const { user, isDemo } = useAuth();
+  const faculty = user?.role === 'faculty' ? user : DEMO_FACULTY;
+  const [schedule, setSchedule] = useState<FacultyClassSchedule[]>(isDemo ? FACULTY_SCHEDULE : []);
   const [activeMarkingClass, setActiveMarkingClass] = useState<FacultyClassSchedule | null>(null);
-  const [roster, setRoster] = useState<StudentRosterItem[]>(INITIAL_STUDENT_ROSTER);
+  const [roster, setRoster] = useState<StudentRosterItem[]>(isDemo ? INITIAL_STUDENT_ROSTER : []);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(!isDemo);
+  const [dataError, setDataError] = useState('');
+
+  useEffect(() => {
+    if (isDemo || user?.role !== 'faculty') return;
+    let active = true;
+    fetchFacultyDashboard(user.id)
+      .then((data) => {
+        if (!active) return;
+        setSchedule(data.schedule);
+        setRoster(data.roster);
+        setDataError('');
+      })
+      .catch((error: unknown) => {
+        if (active) setDataError(error instanceof Error ? error.message : 'Unable to load faculty data.');
+      })
+      .finally(() => {
+        if (active) setDataLoading(false);
+      });
+    return () => { active = false; };
+  }, [isDemo, user]);
 
   // Open the Attendance Marking interface for a selected class
-  const handleOpenMarking = (cls: FacultyClassSchedule) => {
+  const handleOpenMarking = async (cls: FacultyClassSchedule) => {
     setActiveMarkingClass(cls);
+    if (!isDemo) {
+      try {
+        setRoster(await fetchFacultyRoster(cls.subjectId, cls.period));
+      } catch (error) {
+        setDataError(error instanceof Error ? error.message : 'Unable to load the class roster.');
+      }
+    }
   };
 
   // Toggle student status between Present and Absent
@@ -49,28 +81,29 @@ export const FacultyDashboard: React.FC = () => {
   };
 
   // Submit attendance and record confirmation
-  const handleSubmitAttendance = () => {
+  const handleSubmitAttendance = async () => {
     if (!activeMarkingClass) return;
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      // Mark this class as completed in state
-      setSchedule((prev) =>
-        prev.map((c) =>
-          c.id === activeMarkingClass.id ? { ...c, attendanceCompleted: true } : c
-        )
-      );
-      const presentCount = roster.filter((s) => s.status === 'Present').length;
-      const absentCount = roster.filter((s) => s.status === 'Absent').length;
-
+    try {
+      if (!isDemo && user?.role === 'faculty') {
+        await saveAttendance(user.id, activeMarkingClass.subjectId, activeMarkingClass.period, roster);
+      } else {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+      setSchedule((prev) => prev.map((item) => item.id === activeMarkingClass.id
+        ? { ...item, attendanceCompleted: true }
+        : item));
+      const presentCount = roster.filter((student) => student.status === 'Present').length;
+      const absentCount = roster.filter((student) => student.status === 'Absent').length;
       setActiveMarkingClass(null);
-      setSuccessToast(
-        `Attendance recorded successfully for ${activeMarkingClass.subjectCode} (${activeMarkingClass.section}). Present: ${presentCount}, Absent: ${absentCount}.`
-      );
-
-      setTimeout(() => setSuccessToast(null), 6000);
-    }, 500);
+      setSuccessToast(`Attendance recorded for ${activeMarkingClass.subjectCode} (${activeMarkingClass.section}). Present: ${presentCount}, Absent: ${absentCount}.`);
+      window.setTimeout(() => setSuccessToast(null), 6000);
+      setDataError('');
+    } catch (error) {
+      setDataError(error instanceof Error ? error.message : 'Unable to save attendance.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const presentCount = roster.filter((s) => s.status === 'Present').length;
@@ -84,6 +117,8 @@ export const FacultyDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
+      {dataLoading && <p role="status" className="text-sm text-slate-500">Loading your classes...</p>}
+      {dataError && <p role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{dataError}</p>}
       {/* Toast alert */}
       {successToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-emerald-900 text-white px-5 py-3.5 shadow-2xl border border-emerald-700 animate-in slide-in-from-bottom-5">
@@ -105,25 +140,25 @@ export const FacultyDashboard: React.FC = () => {
           <div className="flex items-start gap-4">
             <div className="h-14 w-14 rounded-2xl bg-white/10 p-1 backdrop-blur-md border border-white/20 shrink-0">
               <img
-                src={DEMO_FACULTY.avatar}
-                alt={DEMO_FACULTY.name}
+                src={faculty.avatar}
+                alt={faculty.name}
                 className="h-full w-full object-cover rounded-xl"
               />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {DEMO_FACULTY.name}
+                  {faculty.name}
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/30 px-2.5 py-0.5 text-xs font-semibold text-purple-200 border border-purple-400/30">
-                  ID: {DEMO_FACULTY.facultyId}
+                  ID: {faculty.facultyId}
                 </span>
               </div>
               <p className="mt-1 text-xs sm:text-sm text-purple-200/90">
-                {DEMO_FACULTY.designation} • {DEMO_FACULTY.department}
+                {faculty.designation} • {faculty.department}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                {DEMO_FACULTY.assignedSubjects.map((sub, i) => (
+                {(isDemo ? faculty.assignedSubjects : [...new Set(schedule.map((item) => `${item.subjectCode} - ${item.subjectName}`))]).map((sub, i) => (
                   <span
                     key={i}
                     className="text-[11px] bg-white/10 px-2 py-0.5 rounded text-slate-300 font-medium"
@@ -151,14 +186,14 @@ export const FacultyDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Assigned Students"
-          value="125"
-          subtitle="Across 3 sections"
+          value={new Set(schedule.flatMap((item) => item.subjectId)).size ? schedule.reduce((sum, item) => sum + item.totalStudents, 0) : 0}
+          subtitle={`Across ${schedule.length} scheduled classes`}
           icon={<Users className="h-5 w-5" />}
           iconBgColor="bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400"
         />
         <StatCard
           title="Subjects Handled"
-          value={DEMO_FACULTY.assignedSubjects.length}
+          value={isDemo ? faculty.assignedSubjects.length : new Set(schedule.map((item) => item.subjectId)).size}
           subtitle="Undergraduate & Masters"
           icon={<BookOpen className="h-5 w-5" />}
           iconBgColor="bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"
@@ -173,7 +208,7 @@ export const FacultyDashboard: React.FC = () => {
         <StatCard
           title="Marking Completion"
           value={`${Math.round(
-            (schedule.filter((c) => c.attendanceCompleted).length / schedule.length) * 100
+            (schedule.length ? schedule.filter((c) => c.attendanceCompleted).length / schedule.length : 0) * 100
           )}%`}
           subtitle={`${schedule.filter((c) => c.attendanceCompleted).length} of ${schedule.length} completed`}
           icon={<CheckCircle2 className="h-5 w-5" />}
@@ -190,8 +225,8 @@ export const FacultyDashboard: React.FC = () => {
               Select any lecture to mark or review student attendance
             </p>
           </div>
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
-            Friday, 11 September 2026
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
         </div>
 

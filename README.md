@@ -176,27 +176,43 @@ Edge cases handled:
 
 ---
 
-## Render and Supabase Development Setup
+## Render and Supabase Setup
 
-The current dashboards and demo login still use `mockData.ts`; adding the Supabase client does not migrate demo users or attendance records automatically. Do not use the demo role switcher as real authentication. The setup below creates the deployment and database foundation; wiring each dashboard to live records is a separate integration step.
+The application supports two modes. Without Supabase environment variables, it runs with local demo personas and sample data. When configured, it uses Supabase email/password authentication, student registration, database-backed student/faculty/admin dashboard data, and persisted faculty attendance. A newly created database starts empty; demo records are not copied into it.
 
-### 1. Create the Supabase project
+### 1. Create and configure Supabase
 
 1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
-2. In **SQL Editor**, run [`supabase/schema.sql`](./supabase/schema.sql).
-3. In **Project Settings → API**, copy the project URL and the publishable key (or legacy `anon` key). Never put the `service_role` key in this frontend.
-4. For local development, copy `frontend/.env.example` to `frontend/.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Restart Vite after changing environment variables.
+2. Open **SQL Editor**, paste and run [`supabase/schema.sql`](./supabase/schema.sql). It creates profiles, subjects, enrollments, timetable slots, announcements and attendance records, plus row-level security policies and student-profile provisioning on signup.
+3. In **Project Settings → API**, copy the project URL and the **publishable key** (or legacy `anon` key). Never use the `service_role` key in frontend or Render environment variables.
+4. In **Authentication → URL Configuration**, set the Site URL to the eventual Render URL and add that URL (and `http://localhost:5173/**` for local work) to the redirect URL allow list.
+5. For local development, copy `frontend/.env.example` to `frontend/.env.local`, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, then restart Vite. `.env.local` is git-ignored.
 
-The schema enables row-level security. The first user profile is created as a student; create faculty/admin accounts and assign those roles only from a trusted Supabase dashboard or server-side process, never from browser code.
+Student accounts can be created from the configured portal's **Create student account** form. Supabase email confirmation may need to be completed before the student can sign in. Faculty and admin roles cannot be self-selected; provision their Auth accounts, then promote their profile using the trusted Supabase SQL Editor.
 
-### 2. Deploy the frontend on Render
+After creating an Auth user in **Authentication → Users**, promote the initial administrator by replacing the email below and running this in SQL Editor:
 
-1. Push this repository to GitHub, then in Render choose **New → Blueprint** and connect the repository. Render reads [`render.yaml`](./render.yaml) and creates a static site.
-2. In the Render service's **Environment** settings, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the values from Supabase. These are public frontend build variables; do not add the Supabase `service_role` key.
-3. Trigger a deploy. Render builds `frontend` and publishes `frontend/dist`; the rewrite rule supports client-side routes such as `/student` and `/admin`.
+```sql
+update public.profiles
+set role = 'admin', admin_id = 'ADM-001', title = 'Portal Administrator'
+where id = (select id from auth.users where email = 'admin@example.edu');
+```
 
-To deploy later updates, push commits to the connected Git branch and Render will rebuild the static site. If the repository is private, authorize Render to access it during the Blueprint setup.
+Create faculty Auth accounts the same way, then assign their role and identifiers:
 
-### Current integration boundary
+```sql
+update public.profiles
+set role = 'faculty', faculty_id = 'FAC-001', designation = 'Lecturer', department = 'Computer Science'
+where id = (select id from auth.users where email = 'faculty@example.edu');
+```
 
-The optional Supabase client is in [`frontend/src/lib/supabase.ts`](./frontend/src/lib/supabase.ts). It initializes only when both Vite variables exist. At this stage, the login flow, dashboards, and attendance actions are still demo-only and do not read or write Supabase rows. Before real student data is used, implement Supabase Auth, trusted profile provisioning, and live attendance queries/mutations, then test the RLS policies with student, faculty, and admin accounts.
+New accounts must not be allowed to self-assign a privileged role or trusted identifiers. Set `admin_id`/`faculty_id`, designation/title, department, roll and hall-ticket numbers, course details, and role from trusted SQL after creating their Auth accounts. Use Supabase **Table Editor** or SQL Editor to add real subjects, enrollments, timetable slots, and announcements. Assign each subject's `faculty_id` to the faculty profile UUID; create one `enrollments` row per student/subject. RLS exposes students only to themselves, their assigned faculty, or admins; faculty can write attendance only for subjects assigned to them.
+
+### 2. Deploy on Render
+
+1. Sign in to [Render](https://dashboard.render.com), select **New → Blueprint**, and connect this GitHub repository. Render reads [`render.yaml`](./render.yaml) and creates a static site that builds `frontend` and serves `frontend/dist` with SPA route rewrites.
+2. In the new Render service's **Environment** settings, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` using the Supabase project URL and publishable/anon key. These values are included in the browser bundle by Vite, so only use the publishable key; RLS protects the database.
+3. Deploy the service. Push future code updates to the connected branch to trigger Render rebuilds. If the repository is private, authorize Render's GitHub integration during Blueprint creation.
+4. Copy the Render site URL back into Supabase **Authentication → URL Configuration** as the Site URL and allowed redirect URL.
+
+The client is in [`frontend/src/lib/supabase.ts`](./frontend/src/lib/supabase.ts), and the database-backed queries/writes are in [`frontend/src/services/portalData.ts`](./frontend/src/services/portalData.ts). The role switcher and one-click demo accounts are intentionally hidden when Supabase is configured. Never commit `.env.local`, database passwords, or service-role secrets.

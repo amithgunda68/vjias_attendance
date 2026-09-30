@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GraduationCap,
   Calendar,
@@ -18,6 +18,9 @@ import {
   STUDENT_ATTENDANCE_HISTORY,
   TODAY_TIMETABLE,
 } from '../services/mockData';
+import { useAuth } from '../context/AuthContext';
+import { fetchStudentDashboard } from '../services/portalData';
+import type { AttendanceRecord, SubjectAttendance, TimetableSlot } from '../types';
 import {
   calculatePercentage,
   getAttendanceTier,
@@ -25,10 +28,36 @@ import {
 } from '../utils/attendance';
 
 export const StudentDashboard: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  const student = user?.role === 'student' ? user : DEMO_STUDENT;
+  const [subjects, setSubjects] = useState<SubjectAttendance[]>(isDemo ? STUDENT_SUBJECTS : []);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>(isDemo ? STUDENT_ATTENDANCE_HISTORY : []);
+  const [timetable, setTimetable] = useState<TimetableSlot[]>(isDemo ? TODAY_TIMETABLE : []);
+  const [dataLoading, setDataLoading] = useState(!isDemo);
+  const [dataError, setDataError] = useState('');
 
-  // Aggregate overall attendance stats
-  const totalPresent = STUDENT_SUBJECTS.reduce((acc, sub) => acc + sub.presentClasses, 0);
-  const totalClasses = STUDENT_SUBJECTS.reduce((acc, sub) => acc + sub.totalClasses, 0);
+  useEffect(() => {
+    if (isDemo || user?.role !== 'student') return;
+    let active = true;
+    fetchStudentDashboard(user.id)
+      .then((data) => {
+        if (!active) return;
+        setSubjects(data.subjects);
+        setAttendanceHistory(data.history);
+        setTimetable(data.timetable);
+        setDataError('');
+      })
+      .catch((error: unknown) => {
+        if (active) setDataError(error instanceof Error ? error.message : 'Unable to load attendance data.');
+      })
+      .finally(() => {
+        if (active) setDataLoading(false);
+      });
+    return () => { active = false; };
+  }, [isDemo, user]);
+
+  const totalPresent = subjects.reduce((acc, sub) => acc + sub.presentClasses, 0);
+  const totalClasses = subjects.reduce((acc, sub) => acc + sub.totalClasses, 0);
   const totalAbsent = totalClasses - totalPresent;
   const overallPercentage = calculatePercentage(totalPresent, totalClasses);
   const overallTier = getAttendanceTier(overallPercentage);
@@ -37,13 +66,15 @@ export const StudentDashboard: React.FC = () => {
 
   // History search/filter state
   const [historyFilter, setHistoryFilter] = useState<string>('all');
-  const filteredHistory = STUDENT_ATTENDANCE_HISTORY.filter((item) => {
+  const filteredHistory = attendanceHistory.filter((item) => {
     if (historyFilter === 'all') return true;
     return item.status.toLowerCase() === historyFilter.toLowerCase();
   });
 
   return (
     <div className="space-y-8 pb-12">
+      {dataLoading && <p role="status" className="text-sm text-slate-500">Loading your attendance data...</p>}
+      {dataError && <p role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{dataError}</p>}
       {/* Student Welcome & Profile Header */}
       <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800/80">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
@@ -51,24 +82,24 @@ export const StudentDashboard: React.FC = () => {
           <div className="flex items-start gap-4">
             <div className="h-14 w-14 rounded-2xl bg-white/10 p-1 backdrop-blur-md border border-white/20 shrink-0">
               <img
-                src={DEMO_STUDENT.avatar}
-                alt={DEMO_STUDENT.name}
+                src={student.avatar}
+                alt={student.name}
                 className="h-full w-full object-cover rounded-xl"
               />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  Welcome back, {DEMO_STUDENT.name}
+                  Welcome back, {student.name}
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/30 px-2.5 py-0.5 text-xs font-semibold text-indigo-200 border border-indigo-400/30">
-                  <GraduationCap className="h-3.5 w-3.5" /> HT No: {DEMO_STUDENT.hallTicketNumber || DEMO_STUDENT.rollNumber}
+                  <GraduationCap className="h-3.5 w-3.5" /> HT No: {student.hallTicketNumber || student.rollNumber}
                 </span>
               </div>
               <p className="mt-1 text-xs sm:text-sm text-slate-300">
-                {DEMO_STUDENT.course} • Semester {DEMO_STUDENT.semester} • {DEMO_STUDENT.section} ({DEMO_STUDENT.academicYear})
+                {student.course} • Semester {student.semester} • {student.section} ({student.academicYear})
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">{DEMO_STUDENT.department}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{student.department}</p>
             </div>
           </div>
 
@@ -138,12 +169,12 @@ export const StudentDashboard: React.FC = () => {
             <p className="text-xs text-slate-500 dark:text-slate-400">Real-time attendance breakdown by subject and instructor</p>
           </div>
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
-            {STUDENT_SUBJECTS.length} Subjects
+            {subjects.length} Subjects
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {STUDENT_SUBJECTS.map((sub) => {
+          {subjects.map((sub) => {
             const isBelow = sub.percentage < 75;
             return (
               <div
@@ -211,7 +242,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {TODAY_TIMETABLE.map((slot) => (
+            {timetable.map((slot) => (
               <div
                 key={slot.id}
                 className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"

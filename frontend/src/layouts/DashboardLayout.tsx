@@ -5,8 +5,12 @@ import { Navbar } from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';
 
 export const DashboardLayout: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  if (authLoading) {
+    return <div className="min-h-screen p-8 text-sm text-slate-500">Restoring your session...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

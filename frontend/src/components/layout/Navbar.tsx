@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu,
@@ -15,19 +15,33 @@ import { useAuth } from '../../context/AuthContext';
 
 import type { UserRole } from '../../types';
 import { ANNOUNCEMENTS } from '../../services/mockData';
+import { fetchAnnouncements } from '../../services/portalData';
+import type { Announcement } from '../../types';
 
 interface NavbarProps {
   onOpenMobileMenu: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, role, isDemo, demoLogin, logout } = useAuth();
   const navigate = useNavigate();
+  const [announcements, setAnnouncements] = useState<Announcement[]>(isDemo ? ANNOUNCEMENTS : []);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
+  useEffect(() => {
+    if (isDemo || !user) return;
+    let active = true;
+    fetchAnnouncements().then((items) => {
+      if (active) setAnnouncements(items);
+    }).catch(() => {
+      if (active) setAnnouncements([]);
+    });
+    return () => { active = false; };
+  }, [isDemo, user]);
+
   const handleRoleChange = (newRole: UserRole) => {
-    switchRole(newRole);
+    demoLogin(newRole);
     setShowRoleMenu(false);
     if (newRole === 'student') navigate('/student');
     else if (newRole === 'faculty') navigate('/faculty');
@@ -71,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
       <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
 
         {/* Quick Role Switcher (Crucial for Demo/Testing per Section 37) */}
-        <div className="relative">
+        {isDemo && <div className="relative">
           <button
             type="button"
             onClick={() => {
@@ -127,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
               </button>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Notifications Popover */}
         <div className="relative">
@@ -150,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
                 <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">3 unread</span>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {ANNOUNCEMENTS.map((ann) => (
+                {announcements.map((ann) => (
                   <div key={ann.id} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-2.5 hover:bg-indigo-50/40 dark:hover:bg-slate-800/70 transition-colors">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">

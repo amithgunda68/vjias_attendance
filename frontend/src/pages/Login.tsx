@@ -13,26 +13,37 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 import type { UserRole } from '../types';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, registerStudent, demoLogin } = useAuth();
 
-  const [hallTicket, setHallTicket] = useState('HT2024-CS042');
-  const [password, setPassword] = useState('student123');
+  const [hallTicket, setHallTicket] = useState(isSupabaseConfigured ? '' : 'HT2024-CS042');
+  const [password, setPassword] = useState(isSupabaseConfigured ? '' : 'student123');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
+  const [hallTicketNumber, setHallTicketNumber] = useState('');
+  const [department, setDepartment] = useState('');
+  const [course, setCourse] = useState('');
+  const [semester, setSemester] = useState('1');
+  const [section, setSection] = useState('A');
+  const [academicYear, setAcademicYear] = useState('2026-2027');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
     if (!hallTicket.trim()) {
-      setErrorMessage('Please enter your Hall Ticket Number.');
+      setErrorMessage(isSupabaseConfigured ? 'Please enter your email address.' : 'Please enter your Hall Ticket Number.');
       return;
     }
     if (!password.trim()) {
@@ -41,9 +52,33 @@ export const Login: React.FC = () => {
     }
 
     setLoading(true);
-
-    // Simulate authenticating and verifying credentials
-    setTimeout(() => {
+    try {
+      if (isSupabaseConfigured) {
+        if (isSignUp) {
+          if (!fullName.trim() || !rollNumber.trim() || !department.trim() || !course.trim()) {
+            throw new Error('Complete the student profile fields before creating an account.');
+          }
+          const hasSession = await registerStudent(hallTicket.trim(), password, {
+            fullName: fullName.trim(),
+            rollNumber: rollNumber.trim(),
+            hallTicketNumber: hallTicketNumber.trim(),
+            department: department.trim(),
+            course: course.trim(),
+            semester: Number(semester),
+            section: section.trim(),
+            academicYear: academicYear.trim(),
+          });
+          if (hasSession) {
+            navigate('/student');
+          } else {
+            setSuccessMessage('Account created. Check your email to confirm it, then sign in.');
+            setIsSignUp(false);
+          }
+        } else {
+          const authenticatedUser = await login(hallTicket.trim(), password);
+          navigate(`/${authenticatedUser.role}`);
+        }
+      } else {
       setLoading(false);
       const cleanInput = hallTicket.trim().toLowerCase();
       let targetRole: UserRole = 'student';
@@ -55,13 +90,18 @@ export const Login: React.FC = () => {
         targetRole = 'student';
       }
 
-      login(targetRole);
+      demoLogin(targetRole);
       navigate(`/${targetRole}`);
-    }, 600);
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInstantDemoLogin = (role: UserRole) => {
-    login(role);
+    demoLogin(role);
     navigate(`/${role}`);
   };
 
@@ -94,6 +134,11 @@ export const Login: React.FC = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
         {/* Main Login Card */}
         <div className="bg-slate-900/95 py-8 px-6 sm:px-10 shadow-2xl rounded-2xl border border-slate-800 backdrop-blur-md">
+          {successMessage && (
+            <div role="status" className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-3 text-xs text-emerald-300">
+              {successMessage}
+            </div>
+          )}
           {errorMessage && (
             <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
@@ -102,19 +147,57 @@ export const Login: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSupabaseConfigured && isSignUp && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Full name</label>
+                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} autoComplete="name" required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Hall ticket number</label>
+                    <input value={hallTicketNumber} onChange={(event) => setHallTicketNumber(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Roll number</label>
+                    <input value={rollNumber} onChange={(event) => setRollNumber(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Department</label>
+                    <input value={department} onChange={(event) => setDepartment(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Course</label>
+                    <input value={course} onChange={(event) => setCourse(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Semester</label>
+                    <input type="number" min="1" max="12" value={semester} onChange={(event) => setSemester(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Section</label>
+                    <input value={section} onChange={(event) => setSection(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-300">Academic year</label>
+                    <input value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} required className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-100" />
+                  </div>
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Hall Ticket Number
+                {isSupabaseConfigured ? 'Email Address' : 'Hall Ticket Number'}
               </label>
               <div className="relative rounded-lg shadow-2xs">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <IdCard className="h-4 w-4 text-slate-500" />
                 </div>
                 <input
-                  type="text"
+                  type={isSupabaseConfigured ? 'email' : 'text'}
                   value={hallTicket}
                   onChange={(e) => setHallTicket(e.target.value)}
-                  placeholder="e.g. HT2024-CS042"
+                  placeholder={isSupabaseConfigured ? 'name@example.com' : 'e.g. HT2024-CS042'}
                   className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-mono uppercase transition-all"
                 />
               </div>
@@ -125,7 +208,7 @@ export const Login: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
                   Password
                 </label>
-                <a
+                {!isSignUp && <a
                   href="#forgot"
                   onClick={(e) => {
                     e.preventDefault();
@@ -134,7 +217,7 @@ export const Login: React.FC = () => {
                   className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   Forgot password?
-                </a>
+                </a>}
               </div>
               <div className="relative rounded-lg shadow-2xs">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -144,7 +227,7 @@ export const Login: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   className="block w-full rounded-lg border border-slate-700 bg-slate-800/80 py-2.5 pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                 />
                 <button
@@ -188,15 +271,24 @@ export const Login: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <span>Sign In to Portal</span>
+                  <span>{isSignUp ? 'Create Student Account' : 'Sign In to Portal'}</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
 
+          {isSupabaseConfigured && (
+            <p className="mt-5 text-center text-xs text-slate-400">
+              {isSignUp ? 'Already registered?' : 'Student account needed?'}{' '}
+              <button type="button" onClick={() => { setIsSignUp(!isSignUp); setErrorMessage(''); setSuccessMessage(''); }} className="font-semibold text-indigo-300 hover:text-indigo-200">
+                {isSignUp ? 'Sign in' : 'Create student account'}
+              </button>
+            </p>
+          )}
+
           {/* Quick Demo Login Selector (Section 37) */}
-          <div className="mt-8 border-t border-slate-800 pt-6">
+          {!isSupabaseConfigured && <div className="mt-8 border-t border-slate-800 pt-6">
             <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
               One-Click Demo Personas
             </p>
@@ -231,7 +323,7 @@ export const Login: React.FC = () => {
                 <span className="text-[10px] text-slate-400">Dean Vance</span>
               </button>
             </div>
-          </div>
+          </div>}
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-500">
