@@ -173,3 +173,30 @@ Edge cases handled:
 - ⏳ **Phase 5: Extended Admin Management** (CRUD dialogs for students, faculty, departments)
 - ⏳ **Phase 6: Backend API & PostgreSQL Database** (Node.js, Express, Prisma/Drizzle)
 - ⏳ **Phase 7: Full Integration & End-to-End Testing**
+
+---
+
+## Render and Supabase Development Setup
+
+The current dashboards and demo login still use `mockData.ts`; adding the Supabase client does not migrate demo users or attendance records automatically. Do not use the demo role switcher as real authentication. The setup below creates the deployment and database foundation; wiring each dashboard to live records is a separate integration step.
+
+### 1. Create the Supabase project
+
+1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
+2. In **SQL Editor**, run [`supabase/schema.sql`](./supabase/schema.sql).
+3. In **Project Settings → API**, copy the project URL and the publishable key (or legacy `anon` key). Never put the `service_role` key in this frontend.
+4. For local development, copy `frontend/.env.example` to `frontend/.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Restart Vite after changing environment variables.
+
+The schema enables row-level security. The first user profile is created as a student; create faculty/admin accounts and assign those roles only from a trusted Supabase dashboard or server-side process, never from browser code.
+
+### 2. Deploy the frontend on Render
+
+1. Push this repository to GitHub, then in Render choose **New → Blueprint** and connect the repository. Render reads [`render.yaml`](./render.yaml) and creates a static site.
+2. In the Render service's **Environment** settings, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the values from Supabase. These are public frontend build variables; do not add the Supabase `service_role` key.
+3. Trigger a deploy. Render builds `frontend` and publishes `frontend/dist`; the rewrite rule supports client-side routes such as `/student` and `/admin`.
+
+To deploy later updates, push commits to the connected Git branch and Render will rebuild the static site. If the repository is private, authorize Render to access it during the Blueprint setup.
+
+### Current integration boundary
+
+The optional Supabase client is in [`frontend/src/lib/supabase.ts`](./frontend/src/lib/supabase.ts). It initializes only when both Vite variables exist. At this stage, the login flow, dashboards, and attendance actions are still demo-only and do not read or write Supabase rows. Before real student data is used, implement Supabase Auth, trusted profile provisioning, and live attendance queries/mutations, then test the RLS policies with student, faculty, and admin accounts.

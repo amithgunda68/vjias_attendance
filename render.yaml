@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vjias-attendance
+    runtime: static
+    buildCommand: npm install --prefix frontend --legacy-peer-deps && npm run build --prefix frontend
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
