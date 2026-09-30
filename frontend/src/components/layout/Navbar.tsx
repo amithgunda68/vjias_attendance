@@ -40,8 +40,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 sm:px-6 backdrop-blur-md dark:bg-[#0c1222]/90 dark:border-slate-800 transition-colors">
-      <div className="flex items-center gap-3 sm:gap-4">
+    <header className="sticky top-0 z-30 flex h-auto min-h-16 w-full flex-wrap items-center justify-between gap-y-2 border-b border-slate-200/90 bg-white/95 px-4 py-2 backdrop-blur-md dark:bg-[#0c1222]/90 dark:border-slate-800 transition-colors sm:h-16 sm:flex-nowrap sm:py-0 sm:px-6">
+      <div className="flex w-full items-center gap-3 sm:w-auto sm:gap-4">
         <button
           type="button"
           onClick={onOpenMobileMenu}
@@ -51,8 +51,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
         </button>
 
         {/* Mobile Brand Logo */}
-        <div className="flex items-center lg:hidden">
-          <img src="/vjias-logo.png" alt="VJIAS" className="h-7 w-auto object-contain max-w-[140px]" />
+        <div className="flex min-w-0 items-center lg:hidden">
+          <img src="/vjias-logo.png" alt="VJIAS - Vignana Jyothi Institute of Arts & Sciences" className="h-9 w-auto max-w-[180px] shrink-0 object-contain" />
         </div>
 
         {/* Global Search Input */}
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
 
         {/* Quick Role Switcher (Crucial for Demo/Testing per Section 37) */}
         <div className="relative">
